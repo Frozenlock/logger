@@ -56,16 +56,18 @@
 
   At start: we reset the local-device, discover the network, wait a
   while and then start to log the network."[]
-  (reset! logging-state "Mapping network")
-  (future ;; in another thread
-    (scan/update-configs)
-    (init)
-    (reset! logging-state "Logging")
-    (let [time-interval (min-ms (or (:time-interval (scan/get-configs)) 10))]
-      {:logger (ot/every time-interval scan/scan-and-spit pool)
-       :send-logs (ot/every (min-ms 5) scan/send-logs pool) ;;60
-       :check-updates (ot/every (min-ms 60) update-configs pool :initial-delay (min-ms 10)) ;;60
-       :restart (ot/at (+ (min-ms 60) (ot/now)) restart-logging pool)}))) ;;1440
+  (when (= @logging-state "Stopped") ;;don't log twice simultaneously
+    (reset! logging-state "Mapping network")
+    (future ;; in another thread
+      (scan/update-configs)
+      (init)
+      (when-not (= @logging-state "Stopped") ;; if we didn't stop the logging meanwhile
+        (reset! logging-state "Logging")
+        (let [time-interval (min-ms (or (:time-interval (scan/get-configs)) 10))]
+          {:logger (ot/every time-interval scan/scan-and-spit pool)
+           :send-logs (ot/every (min-ms 5) scan/send-logs pool) ;;60
+           :check-updates (ot/every (min-ms 60) update-configs pool :initial-delay (min-ms 10)) ;;60
+           :restart (ot/at (+ (min-ms 60) (ot/now)) restart-logging pool)}))))) ;;1440
 
 (defn maybe-start-logging
   "If a logger config file is found, start the logging. Do nothing
