@@ -7,8 +7,12 @@
 
 (declare start-logging)
 
+(def logging-state
+  (atom "Stopped"))
+
 (defn stop-logging []
-  (ot/stop-and-reset-pool! pool))
+  (ot/stop-and-reset-pool! pool)
+  (reset! logging-state "Stopped"))
 
 (defn restart-logging []
   (stop-logging)
@@ -52,9 +56,11 @@
 
   At start: we reset the local-device, discover the network, wait a
   while and then start to log the network."[]
+  (reset! logging-state "Mapping network")
   (future ;; in another thread
     (scan/update-configs)
     (init)
+    (reset! logging-state "Logging")
     (let [time-interval (min-ms (or (:time-interval (scan/get-configs)) 10))]
       {:logger (ot/every time-interval scan/scan-and-spit pool)
        :send-logs (ot/every (min-ms 5) scan/send-logs pool) ;;60
