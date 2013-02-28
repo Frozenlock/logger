@@ -65,9 +65,9 @@
         (reset! logging-state "Logging")
         (let [time-interval (min-ms (or (:time-interval (scan/get-configs)) 10))]
           {:logger (ot/every time-interval scan/scan-and-spit pool)
-           :send-logs (ot/every (min-ms 5) scan/send-logs pool) ;;60
+           :send-logs (ot/every (min-ms 60) scan/send-logs pool) ;;60
            :check-updates (ot/every (min-ms 60) update-configs pool :initial-delay (min-ms 10)) ;;60
-           :restart (ot/at (+ (min-ms 60) (ot/now)) restart-logging pool)}))))) ;;1440
+           :restart (ot/at (+ (min-ms 1440) (ot/now)) restart-logging pool)}))))) ;;1440
 
 (defn maybe-start-logging
   "If a logger config file is found, start the logging. Do nothing
