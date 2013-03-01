@@ -14,10 +14,9 @@
   "https://bacnethelp.com/logger/post-to-project")
 
 
-(defmacro logger-version
-  "Returns the logger version, as defined in the project.clj."[]
-  (let [x# (System/getProperty "logger2.version")]
-    `~x#))
+(def logger-version
+  "The logger version used to check what data encoding is used."
+  2.0.0)
 
 (def path (str local/path "logger/"))
 
@@ -49,7 +48,7 @@
     :logger-password <string>}"
   [query]
   (-> (client/get *config-address*
-                  {:query-params (assoc query :logger-version (logger-version))})
+                  {:query-params (assoc query :logger-version logger-version)})
       :body
       local/safe-read))
 
@@ -137,7 +136,7 @@
   (let [{:keys [logger-password project-id]} (get-configs)]
     (try (client/post *posting-address*
                       {:form-params {:data data
-                                     :logger-version (logger-version)
+                                     :logger-version logger-version
                                      :logger-password logger-password
                                      :project-id project-id}
                        :content-type "application/x-www-form-urlencoded"})
