@@ -5,7 +5,6 @@
             [logger.encoding :as encoding]
             [gzip64.core :as g]))
 
-(import 'java.util.Calendar)
 
 (def ^:dynamic *config-address*
   "https://bacnethelp.com/logger/get-config")
@@ -108,6 +107,8 @@
          min-fn
          max-fn)))
 
+(def last-scan-duration (atom nil))
+
 (defn scan-network
   "Scan the network and return a `snapshot' for logging purposes."[]
   (->> (find-id-to-scan)
@@ -118,12 +119,13 @@
 (defn scan-and-spit
   "Scan the network and save the result in a \"BH-<timestamp>\".log
    file." []
-  (let [spit-file-fn
-        (partial local/mkdir-spit
-                 (str path "BH" (.getTimeInMillis (Calendar/getInstance)) ".log"))]
-    (-> (scan-network)
-        ((comp g/gz64 str))
-        spit-file-fn)))
+   (let [start-time (encoding/timestamp)
+         spit-file-fn (partial local/mkdir-spit
+                               (str path "BH" start-time ".log"))]
+     (-> (scan-network)
+         ((comp g/gz64 str))
+         spit-file-fn)
+     (reset! last-scan-duration (- (encoding/timestamp) start-time))))
 
 
 (defn find-unsent-logs []

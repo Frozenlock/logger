@@ -5,6 +5,10 @@
             [clojure.string :as s]
             [clojure.walk :as w]))
 
+(defn timestamp []
+  (.getMillis (time/now)))
+
+
 ;; ================================================================
 ;; ======================= Data encoding ==========================
 ;; ================================================================
@@ -129,11 +133,16 @@
   {:some-device-id ;<------ device-id as the top key
    {:update \"iso-string\"
     :name \"device-name\" ;; so we don't have to dig in the properties to get it.
+    :scan-duration <time in ms>
     :objects \"<DATA>\"}}"
   [device-id]
-  (let [object-identifiers (bac/remote-objects device-id)]
-    (try {(keyword (str device-id))
-          {:update (str (time/now))
-           :name (.getName (bac/rd device-id))
-           :objects (get-properties device-id object-identifiers)}}
-         (catch Exception e))))
+  (try
+    (let [start-time (timestamp)
+          object-identifiers (bac/remote-objects device-id)
+          properties (get-properties device-id object-identifiers)]
+      {(keyword (str device-id))
+       {:update (str (time/now))
+        :name (.getName (bac/rd device-id))
+        :objects properties
+        :scan-duration (- (timestamp) start-time)}})
+    (catch Exception e)))
