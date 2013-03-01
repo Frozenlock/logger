@@ -65,17 +65,16 @@
 
 (defn find-devices-by-properties
   "Check the `device' object in each device and try to match the
-   properties with the criteria map.
+   properties with the criteria map. Devices are tested in parallels.
 
    See `bacure.core/where-or-not-found' for a criteria example."
-   [criteria]
-   (remove nil?
-           (for [device-id (bac/remote-devices)]
-             (-> (filter (bac/where-or-not-found criteria)
-                         (bac/remote-object-properties device-id [:device device-id] :all))
-                 ((fn [x] (when (seq x)
-                            device-id)))))))
-
+  [criteria]
+  (letfn [(filtering-fn [id]
+            (-> (filter (bac/where-or-not-found criteria)
+                        (bac/remote-object-properties id [:device id] :all))
+                ((fn [x] (when (seq x) id)))))]
+    (remove nil?
+            (pmap filtering-fn (bac/remote-devices)))))
 
 (def devices-to-remove
   "List of device IDs that shouldn't be logged."
@@ -112,7 +111,7 @@
 (defn scan-network
   "Scan the network and return a `snapshot' for logging purposes."[]
   (->> (find-id-to-scan)
-       (map encoding/scan-device)
+       (pmap encoding/scan-device) ;;use the power of parallelization!
        (apply merge)
        (hash-map :data)))
 
