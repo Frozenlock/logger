@@ -1,6 +1,8 @@
 (ns logger.scan
   (:require [clj-http.client :as client]
             [bacure.core :as bac]
+            [bacure.remote-device :as rd]
+            [bacure.local-device :as ld]
             [bacure.local-save :as local]
             [logger.encoding :as encoding]
             [gzip64.core :as g]))
@@ -74,7 +76,7 @@
                         (bac/remote-object-properties id [:device id] :all))
                 ((fn [x] (when (seq x) id)))))]
     (remove nil?
-            (pmap filtering-fn (bac/remote-devices)))))
+            (pmap filtering-fn (rd/remote-devices)))))
 
 (def devices-to-remove
   "List of device IDs that shouldn't be logged."
@@ -100,7 +102,7 @@
          remove-fn (fn [x] (clojure.set/difference x @devices-to-remove (into #{} id-to-remove)))
          min-fn (fn [x] (if min-range (filter #(> % min-range) x) x))
          max-fn (fn [x] (if max-range (filter #(< % max-range) x) x))]
-     (-> (into #{} (bac/remote-devices))
+     (-> (into #{} (rd/remote-devices))
          keep-fn
          remove-fn
          min-fn

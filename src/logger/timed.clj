@@ -1,7 +1,10 @@
 (ns logger.timed
   (:require [logger.scan :as scan]
             [overtone.at-at :as ot]
-            [bacure.core :as bac]))
+            [bacure.core :as bac]
+            [bacure.local-device :as ld]
+            [bacure.remote-device :as rd]
+            [bacure.remote-device :as remote-device]))
 
 (def pool (ot/mk-pool))
 
@@ -26,10 +29,10 @@
 (defn init
   "Reset the local device, make a list of remote devices and find
    those that should be excluded based on their properties."[]
-   (bac/reset-local-device (scan/get-configs))
-   (bac/discover-network)
+   (ld/reset-local-device (scan/get-configs))
+   (rd/discover-network)
    (Thread/sleep (min-ms 0.5)) ;; wait 30 sec so we know we have all the network.
-   (bac/all-extended-information)
+   (rd/all-extended-information)
    (scan/update-devices-to-remove))
 
 (defn update-configs
@@ -64,8 +67,8 @@
       (when-not (= @logging-state "Stopped") ;; if we didn't stop the logging meanwhile
         (reset! logging-state "Logging")
         (let [time-interval (min-ms (or (:time-interval (scan/get-configs)) 10))]
-          {:logger (ot/every time-interval scan/scan-and-spit pool)
-           :send-logs (ot/every (min-ms 60) scan/send-logs pool) ;;60
+          {:logger (ot/every time-interval #(do (scan/scan-and-spit)
+                                                (scan/send-logs)) pool)
            :check-updates (ot/every (min-ms 60) update-configs pool :initial-delay (min-ms 10)) ;;60
            :restart (ot/at (+ (min-ms 1440) (ot/now)) restart-logging pool)}))))) ;;1440
 

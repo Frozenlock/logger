@@ -1,6 +1,7 @@
 (ns logger.encoding
   (:require [bacure.core :as bac]
             [bacure.coerce :as coerce]
+            [bacure.remote-device :as rd]
             [clj-time.core :as time] ;already required in bacure
             [clojure.string :as s]
             [clojure.walk :as w]))
@@ -142,7 +143,7 @@
           properties (get-properties device-id object-identifiers)]
       {(keyword (str device-id))
        {:update (str (time/now))
-        :name (.getName (bac/rd device-id))
+        :name (.getName (rd/rd device-id))
         :objects properties
         :scan-duration (- (timestamp) start-time)}})
     (catch Exception e)))
