@@ -73,8 +73,8 @@
            :restart (ot/at (+ (min-ms 1440) (ot/now)) restart-logging pool)}))))) ;;1440
 
 (defn maybe-start-logging
-  "If a logger config file is found, start the logging. Do nothing
-   otherwise." []
+  "If a logger config file is found, start the logging and return
+   true. Do nothing otherwise and return nil." []
    (when (scan/get-configs)
-     (start-logging)))
+     (do (start-logging) true)))
   
