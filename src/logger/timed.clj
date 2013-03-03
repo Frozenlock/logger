@@ -65,9 +65,9 @@
       (when-not (= @logging-state "Stopped") ;; if we didn't stop the logging meanwhile
         (reset! logging-state "Logging")
         (let [time-interval (min-ms (or (:time-interval (scan/get-configs)) 10))]
-          {:logger (ot/every time-interval #(do (scan/scan-and-spit)
+          {:logger (ot/every time-interval #(do (update-configs)
+                                                (scan/scan-and-spit)
                                                 (scan/send-logs)) pool)
-           :check-updates (ot/every (min-ms 60) update-configs pool :initial-delay (min-ms 10)) ;;60
            :restart (ot/at (+ (min-ms 1440) (ot/now)) restart-logging pool)}))))) ;;1440
 
 (defn maybe-start-logging
