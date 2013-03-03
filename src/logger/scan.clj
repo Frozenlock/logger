@@ -5,6 +5,7 @@
             [bacure.local-device :as ld]
             [bacure.local-save :as local]
             [logger.encoding :as encoding]
+            [clojure.java.io :as io]
             [gzip64.core :as g]))
 
 
@@ -35,6 +36,11 @@
 (defn save-configs
   "Save data to configs file. Return data." [data]
   (local/mkdir-spit (str path "/configs.cjm") data) data)
+
+(defn delete-configs
+  "Delete the logger configs file, if found." []
+  (try (io/delete-file (str path "/configs.cjm"))
+       (catch Exception e)))
 
 (defmacro dev [& body]
   `(binding [*config-address* "https://bacnethelp.com:8443/logger/get-config"
