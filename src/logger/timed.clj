@@ -46,9 +46,7 @@
 
   :logger ---------> We scan the network at a regulvar time
                      interval (:time-interval in the configs).
-
-  :send-logs ------> Send the logs to a remote server every hour.
-
+                     Also send back any local logs found.
 
   :check-updates --> Check if the logger configurations on the server
                      changed and update if necessary.

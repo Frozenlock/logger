@@ -49,20 +49,21 @@
   [object-type]
   (let [normal-IO-prop [:object-name :description :present-value
                         :units :status-flags]]
-    (get {:analog-input normal-IO-prop
-          :analog-ouput normal-IO-prop
-          :binary-input normal-IO-prop
-          :binary-output normal-IO-prop
-          :device [:object-name :description :device-type
-                   :vendor-identifier :vendor-name :model-name]
-          :file [:object-name :description]
-          :loop [:object-name :description :present-value
-                 :manipulated-variable-reference
-                 :controlled-variable-reference :controlled-variable-value
-                 :setpoint-reference :setpoint :status-flags]
-          :analog-value [:object-name :description :present-value]}
-         object-type
-         [:object-name :description :present-value :status-flags])))
+    (when-not (re-find #"vendor-specific-(\d+)" (name object-type)) ;don't log vendor-specific
+      (get {:analog-input normal-IO-prop
+            :analog-ouput normal-IO-prop
+            :binary-input normal-IO-prop
+            :binary-output normal-IO-prop
+            :device [:object-name :description :device-type
+                     :vendor-identifier :vendor-name :model-name]
+            :file [:object-name :description]
+            :loop [:object-name :description :present-value
+                   :manipulated-variable-reference
+                   :controlled-variable-reference :controlled-variable-value
+                   :setpoint-reference :setpoint :status-flags]
+            :analog-value [:object-name :description :present-value]}
+           object-type
+           [:object-name :description :present-value :status-flags]))))
 
 (defn convert-units
   "Convert units keyword to their string value."[m]
