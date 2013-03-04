@@ -31,7 +31,6 @@
    those that should be excluded based on their properties."[]
    (ld/reset-local-device (scan/get-configs))
    (rd/discover-network)
-   (rd/all-extended-information)
    (Thread/sleep (min-ms 0.5)) ;; wait 30 sec so we know we have all the network.
    (rd/all-extended-information) ;; recheck for extented information
    (scan/update-devices-to-remove))
