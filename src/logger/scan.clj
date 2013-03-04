@@ -84,33 +84,52 @@
     (remove nil?
             (pmap filtering-fn (rd/remote-devices)))))
 
-(def devices-to-remove
-  "List of device IDs that shouldn't be logged."
-  (atom #{}))
+(defn filter-device
+  "Test the criteria maps agains a device ID and return it if they all
+  succeed." [id criteria-coll]
+  (let [remote-device-props (bac/remote-object-properties id [:device id] :all)]
+    (-> (filter (bac/where-or-not-found (first criteria-coll)) remote-device-props)
+        ((fn [x] (let [crits (next criteria-coll)]
+                   (cond crits (filter-device id crits)
+                         (and (seq x) (seq (first criteria-coll))) :remove
+                         :else :keep)))))))
+                     
 
-(defn update-devices-to-remove
-  "Scan the network, find a list of devices matching the criteria
-   collections and update `devices-to-remove'. Return the list of
-   devices as a set.
-    
-   Because this function will scan the network, it should be used
-   sparingly." []
-  (->> (:criteria-coll (get-configs))
-       (mapcat #(find-devices-by-properties %))
-       (into #{})
-       (reset! devices-to-remove)))
+(def remove-device-table
+  "A map of the device ID, associated with its associated scan behavior.
+   Each time a new device ID is found, it should be matched against
+   the criteria-map to see if it should be scanned. Returns :keep
+   or :remove. If the device is still unchecked, it will be tested
+   before giving a result."
+  (atom {}))
+
+(defn remove-device?
+  "Check if the device ID is marked to be removed. If it hasn't been
+   tested yet, test it and record the result." [id]
+   (if-let [result (get @remove-device-table id)]
+     result
+     (get (swap! remove-device-table #(->> (:criteria-coll (get-configs))
+                                       (filter-device id)
+                                       (assoc % id))) id)))
+
+(defn reset-devices-to-remove-table []
+   (reset! remove-device-table {})
+   (pmap remove-device? (rd/remote-devices)))
+   
 
 (defn find-id-to-scan
   "Check all the different filtering options and return a list of
    device-id to scan." []
    (let [{:keys [max-range min-range id-to-remove id-to-keep]} (get-configs)
-         keep-fn (fn [x] (if id-to-keep (clojure.set/intersection (into #{} id-to-keep) x) x))
-         remove-fn (fn [x] (clojure.set/difference x @devices-to-remove (into #{} id-to-remove)))
+         id-to-keep-fn (fn [x] (if id-to-keep (clojure.set/intersection (into #{} id-to-keep) x) x))
+         id-to-remove-fn (fn [x] (clojure.set/difference x (into #{} id-to-remove)))
+         remove-device (fn [x] (remove #(= :remove (remove-device? %)) x))
          min-fn (fn [x] (if min-range (filter #(> % min-range) x) x))
          max-fn (fn [x] (if max-range (filter #(< % max-range) x) x))]
      (-> (into #{} (rd/remote-devices))
-         keep-fn
-         remove-fn
+         id-to-keep-fn
+         id-to-remove-fn
+         remove-device
          min-fn
          max-fn)))
 

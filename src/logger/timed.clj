@@ -33,7 +33,7 @@
    (rd/discover-network)
    (Thread/sleep (min-ms 0.5)) ;; wait 30 sec so we know we have all the network.
    (rd/all-extended-information) ;; recheck for extented information
-   (scan/update-devices-to-remove))
+   (scan/reset-devices-to-remove-table))
 
 (defn update-configs
   "Check with the remote server if the configs have changed. If they
@@ -64,6 +64,7 @@
         (reset! logging-state "Logging")
         (let [time-interval (min-ms (or (:time-interval (scan/get-configs)) 10))]
           {:logger (ot/every time-interval #(do (update-configs)
+                                                (rd/all-extended-information) ;; if new devices (or just slow)
                                                 (scan/scan-and-spit)
                                                 (scan/send-logs)) pool)
            :restart (ot/at (+ (min-ms 1440) (ot/now)) restart-logging pool)}))))) ;;1440
