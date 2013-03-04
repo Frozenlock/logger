@@ -31,8 +31,9 @@
    those that should be excluded based on their properties."[]
    (ld/reset-local-device (scan/get-configs))
    (rd/discover-network)
-   (Thread/sleep (min-ms 0.5)) ;; wait 30 sec so we know we have all the network.
    (rd/all-extended-information)
+   (Thread/sleep (min-ms 0.5)) ;; wait 30 sec so we know we have all the network.
+   (rd/all-extended-information) ;; recheck for extented information
    (scan/update-devices-to-remove))
 
 (defn update-configs
@@ -45,11 +46,9 @@
   "Add jobs to be executed in the future and/or at regulvar interval.
 
   :logger ---------> We scan the network at a regulvar time
-                     interval (:time-interval in the configs).
-                     Also send back any local logs found.
-
-  :check-updates --> Check if the logger configurations on the server
-                     changed and update if necessary.
+                     interval (:time-interval in the configs). Also,
+                     check for configuration update and send back any
+                     local logs found.
 
   :restart --------> Restart the local device AT LEAST daily. (This is
                      done in order to discard any `visitor devices'
