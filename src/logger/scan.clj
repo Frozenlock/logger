@@ -81,12 +81,13 @@
   "Test the criteria maps agains a device ID and return :remove if any succeed, otherwise keep."
   [id criteria-coll]
   (rd/extended-information id)
-  (let [remote-device-props (bac/remote-object-properties id [:device id] :all)]
-    (-> (filter (bac/where (first criteria-coll)) remote-device-props)
-        ((fn [x] (let [crits (next criteria-coll)]
-                   (cond (and (seq x) (seq (first criteria-coll))) :remove
-                         crits (filter-device id crits)
-                         :else :keep)))))))
+  (when (rd/extended-information? id)
+    (let [remote-device-props (bac/remote-object-properties id [:device id] :all)]
+      (-> (filter (bac/where (first criteria-coll)) remote-device-props)
+          ((fn [x] (let [crits (next criteria-coll)]
+                     (cond (and (seq x) (seq (first criteria-coll))) :remove
+                           crits (filter-device id crits)
+                           :else :keep))))))))
                      
 
 (def remove-device-table
@@ -117,7 +118,7 @@
    (let [{:keys [max-range min-range id-to-remove id-to-keep]} (get-configs)
          id-to-keep-fn (fn [x] (if id-to-keep (clojure.set/intersection (into #{} id-to-keep) x) x))
          id-to-remove-fn (fn [x] (clojure.set/difference x (into #{} id-to-remove)))
-         remove-device (fn [x] (remove #(= :remove (remove-device? %)) x))
+         remove-device (fn [x] (filter #(= :keep (remove-device? %)) x))
          min-fn (fn [x] (if min-range (filter #(> % min-range) x) x))
          max-fn (fn [x] (if max-range (filter #(< % max-range) x) x))]
      ;; and now just keep the remote devices for which we have extended information
