@@ -80,6 +80,7 @@
 (defn filter-device
   "Test the criteria maps agains a device ID and return :remove if any succeed, otherwise keep."
   [id criteria-coll]
+  (rd/extended-information id)
   (let [remote-device-props (bac/remote-object-properties id [:device id] :all)]
     (-> (filter (bac/where (first criteria-coll)) remote-device-props)
         ((fn [x] (let [crits (next criteria-coll)]
