@@ -25,14 +25,19 @@
 (defn- remove-nil-in-maps [m]
   (into {} (remove (comp nil? val) m)))
   
-(defn get-configs
+(defn get-configs-only
   "Get the logger configs. Remove all the `nil' entries."[]
   (try (->> (str path "/configs.cjm")
             slurp
             local/safe-read
-            remove-nil-in-maps
-            (merge (dissoc (local/get-configs) :objects)))
+            remove-nil-in-maps)
        (catch Exception e)))
+
+(defn get-configs
+  "Get the logger configs and merge them with the local device
+  configs."[]
+  (merge (dissoc (local/get-configs) :objects)
+         (get-configs-only)))
 
 (defn save-configs
   "Save data to configs file. Return data." [data]
@@ -63,7 +68,7 @@
 (defn update-configs
   "Get the local configs, fetch them from the server, and merge
    everything together. Return the configs only if they changed."[]
-   (try (let [local-configs (get-configs)
+   (try (let [local-configs (get-configs-only)
               remote-configs (-> (project-configs-from-server local-configs)
                                  remove-nil-in-maps)]
           (when (not= remote-configs (dissoc local-configs :logger-password))
