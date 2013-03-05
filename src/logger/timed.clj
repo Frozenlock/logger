@@ -60,6 +60,7 @@
     (future ;; in another thread
       (scan/update-configs)
       (init)
+      (scan/reset-devices-to-remove-table)
       (when-not (= @logging-state "Stopped") ;; if we didn't stop the logging meanwhile
         (reset! logging-state "Logging")
         (let [time-interval (min-ms (or (:time-interval (scan/get-configs)) 10))]

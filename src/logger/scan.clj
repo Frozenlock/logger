@@ -126,7 +126,8 @@
          remove-device (fn [x] (remove #(= :remove (remove-device? %)) x))
          min-fn (fn [x] (if min-range (filter #(> % min-range) x) x))
          max-fn (fn [x] (if max-range (filter #(< % max-range) x) x))]
-     (-> (into #{} (rd/remote-devices))
+     ;; and now just keep the remote devices for which we have extended information
+     (-> (into #{} (filter rd/extended-information? (rd/remote-devices)))
          id-to-keep-fn
          id-to-remove-fn
          remove-device
