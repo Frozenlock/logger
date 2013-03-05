@@ -27,10 +27,11 @@
   
 (defn get-configs
   "Get the logger configs. Remove all the `nil' entries."[]
-  (try (-> (str path "/configs.cjm")
-           slurp
-           local/safe-read
-           remove-nil-in-maps)
+  (try (->> (str path "/configs.cjm")
+            slurp
+            local/safe-read
+            remove-nil-in-maps
+            (merge (local/get-configs)))
        (catch Exception e)))
 
 (defn save-configs
