@@ -31,7 +31,7 @@
             slurp
             local/safe-read
             remove-nil-in-maps
-            (merge (local/get-configs)))
+            (merge (dissoc (local/get-configs) :objects)))
        (catch Exception e)))
 
 (defn save-configs

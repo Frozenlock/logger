@@ -49,7 +49,7 @@
                      check for configuration update and send back any
                      local logs found.
 
-  :restart --------> Restart the local device AT LEAST daily. (This is
+  :restart --------> Restart the local device each 3 days. (This is
                      done in order to discard any `visitor devices'
                      that are no longer on the network.)
 
@@ -59,8 +59,7 @@
     (reset! logging-state "Mapping network")
     (future ;; in another thread
       (scan/update-configs)
-      (init)
-      (scan/reset-devices-to-remove-table)
+      (init)      
       (when-not (= @logging-state "Stopped") ;; if we didn't stop the logging meanwhile
         (reset! logging-state "Logging")
         (let [time-interval (min-ms (or (:time-interval (scan/get-configs)) 10))]
@@ -68,7 +67,7 @@
                                                 (rd/discover-network) ;; if new devices (or just slow)
                                                 (scan/scan-and-spit)
                                                 (scan/send-logs)) pool)
-           :restart (ot/at (+ (min-ms 1440) (ot/now)) restart-logging pool)}))))) ;;1440
+           :restart (ot/at (+ (* 3 (min-ms 1440)) (ot/now)) restart-logging pool)}))))) ;;1440
 
 (defn maybe-start-logging
   "If a logger config file is found, start the logging and return
