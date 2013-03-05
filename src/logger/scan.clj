@@ -88,7 +88,7 @@
   "Test the criteria maps agains a device ID and return it if they all
   succeed." [id criteria-coll]
   (let [remote-device-props (bac/remote-object-properties id [:device id] :all)]
-    (-> (filter (bac/where-or-not-found (first criteria-coll)) remote-device-props)
+    (-> (filter (bac/where (first criteria-coll)) remote-device-props)
         ((fn [x] (let [crits (next criteria-coll)]
                    (cond crits (filter-device id crits)
                          (and (seq x) (seq (first criteria-coll))) :remove
