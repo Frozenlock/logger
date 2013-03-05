@@ -77,27 +77,14 @@
                               ((fn [x] (merge remote-configs x)))))))
         (catch Exception e)))
 
-(defn find-devices-by-properties
-  "Check the `device' object in each device and try to match the
-   properties with the criteria map. Devices are tested in parallels.
-
-   See `bacure.core/where-or-not-found' for a criteria example."
-  [criteria]
-  (letfn [(filtering-fn [id]
-            (-> (filter (bac/where-or-not-found criteria)
-                        (bac/remote-object-properties id [:device id] :all))
-                ((fn [x] (when (seq x) id)))))]
-    (remove nil?
-            (pmap filtering-fn (rd/remote-devices)))))
-
 (defn filter-device
-  "Test the criteria maps agains a device ID and return it if they all
-  succeed." [id criteria-coll]
+  "Test the criteria maps agains a device ID and return :remove if any succeed, otherwise keep."
+  [id criteria-coll]
   (let [remote-device-props (bac/remote-object-properties id [:device id] :all)]
     (-> (filter (bac/where (first criteria-coll)) remote-device-props)
         ((fn [x] (let [crits (next criteria-coll)]
-                   (cond crits (filter-device id crits)
-                         (and (seq x) (seq (first criteria-coll))) :remove
+                   (cond (and (seq x) (seq (first criteria-coll))) :remove
+                         crits (filter-device id crits)
                          :else :keep)))))))
                      
 
