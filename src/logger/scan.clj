@@ -78,11 +78,17 @@
         (catch Exception e)))
 
 (defn filter-device
-  "Test the criteria maps agains a device ID and return :remove if any succeed, otherwise keep."
-  [id criteria-coll]
+  "Test the criteria maps agains a device ID and return :remove if any
+  succeed, otherwise :keep. If the extended information is not yet
+  available, simply return nil." [id criteria-coll]
   (rd/extended-information id)
   (when (rd/extended-information? id)
-    (let [remote-device-props (bac/remote-object-properties id [:device id] :all)]
+    (let [remote-device-props
+          (bac/remote-object-properties id [:device id]
+                                        [:vendor-identifier :description :device-type
+                                         :vendor-name :object-name :model-name])]
+      ;;don't use `:all', it might not return the model-name if it's a
+      ;;device that doesn't support read-property-multiple.
       (-> (filter (bac/where (first criteria-coll)) remote-device-props)
           ((fn [x] (let [crits (next criteria-coll)]
                      (cond (and (seq x) (seq (first criteria-coll))) :remove
