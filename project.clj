@@ -1,4 +1,4 @@
-(defproject org.clojars.frozenlock/logger "2.0.25"
+(defproject org.clojars.frozenlock/logger "2.0.26"
   :description "Automatic logger for a BACnet network"
   :url "https://bacnethelp.com"
   :license {:name "GNU General Public License V3"

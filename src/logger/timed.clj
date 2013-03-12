@@ -72,6 +72,6 @@
 (defn maybe-start-logging
   "If a logger config file is found, start the logging and return
    true. Do nothing otherwise and return nil." []
-   (when (scan/get-configs)
+   (when (scan/get-configs-only)
      (do (start-logging) true)))
   
