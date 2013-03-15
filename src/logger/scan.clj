@@ -8,12 +8,8 @@
             [clojure.java.io :as io]
             [gzip64.core :as g]))
 
-
-(def ^:dynamic *config-address*
-  "https://bacnethelp.com/logger/get-config")
-
-(def ^:dynamic *posting-address*
-  "https://bacnethelp.com/logger/post-to-project")
+(def ^:dynamic *base-url*
+  "https://bacnethelp.com")
 
 
 (def logger-version
@@ -49,8 +45,7 @@
        (catch Exception e)))
 
 (defmacro dev [& body]
-  `(binding [*config-address* "https://bacnethelp.com:8443/logger/get-config"
-             *posting-address* "https://bacnethelp.com:8443/logger/post-to-project"]
+  `(binding [*base-url* "https://bacnethelp.com:8443"]
      ~@body))
 
 (defn project-configs-from-server
@@ -60,7 +55,7 @@
    {:project-id <string>
     :logger-password <string>}"
   [query]
-  (-> (client/get *config-address*
+  (-> (client/get (str *base-url* "/logger/get-config")
                   {:query-params (assoc query :logger-version logger-version)})
       :body
       local/safe-read))
@@ -164,7 +159,7 @@
 
 (defn send-to-remote-server [data]
   (let [{:keys [logger-password project-id]} (get-configs)]
-    (try (client/post *posting-address*
+    (try (client/post (str *base-url* "/logger/post-to-project")
                       {:form-params {:data data
                                      :logger-version logger-version
                                      :logger-password logger-password
@@ -172,10 +167,21 @@
                        :content-type "application/x-www-form-urlencoded"})
          (catch Exception e))))
 
+(defn project-active?
+  "Check with the remote servers if the project is currently in an
+  active account."[]
+  (let [{:keys [project-id]} (get-configs)]
+    (->> (try (client/get (str *base-url* "/logger/active-project")
+                          {:query-params {:project-id project-id}})
+              (catch Exception e))
+         :status
+         (= 200))))
+
 (defn send-logs
   "Check in the logger path for any unsent logs. If the server
-   can't be reached, keep every log." []
-  (doseq [file (find-unsent-logs)]
-    (when (= 200 (:status (send-to-remote-server (slurp file))))
-      ;; if there's an error, keep the files for the next round
-           (clojure.java.io/delete-file file))))
+   can't be reached (or the account inactive), keep every log." []
+   (when (project-active?)
+     (doseq [file (find-unsent-logs)]
+       (when (= 200 (:status (send-to-remote-server (slurp file))))
+         ;; if there's an error, keep the files for the next round
+         (clojure.java.io/delete-file file)))))
