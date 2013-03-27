@@ -14,7 +14,7 @@
   (atom "Stopped"))
 
 (defn stop-logging []
-  (ot/stop-and-reset-pool! pool)
+  (ot/stop-and-reset-pool! pool :strategy :kill)
   (reset! logging-state "Stopped"))
 
 (defn restart-logging []
@@ -31,7 +31,7 @@
    those that should be excluded based on their properties."[]
    (ld/reset-local-device (scan/get-configs))
    (rd/discover-network)
-   (Thread/sleep (min-ms 0.5)) ;; wait 30 sec so we know we have all the network.
+   (Thread/sleep 5000)
    (rd/all-extended-information) ;; recheck for extented information
    (scan/reset-devices-to-remove-table))
 
