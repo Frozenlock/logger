@@ -29,7 +29,8 @@
 (defn init
   "Reset the local device, make a list of remote devices and find
    those that should be excluded based on their properties."[]
-   (ld/reset-local-device (scan/get-configs))
+   (ld/reset-local-device (select-keys (scan/get-configs)
+                                       [:device-id :port]))
    (rd/discover-network)
    (Thread/sleep 5000)
    (rd/all-extended-information) ;; recheck for extented information

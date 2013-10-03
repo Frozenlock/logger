@@ -14,7 +14,7 @@
 
 (def logger-version
   "The logger version used to check what data encoding is used."
-  "2.0.0")
+  "2.0.1")
 
 (def path (str local/path "logger/"))
 
