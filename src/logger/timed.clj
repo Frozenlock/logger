@@ -66,7 +66,7 @@
         (let [time-interval (min-ms (or (:time-interval (scan/get-configs)) 10))]
           {:logger (ot/every time-interval #(do (update-configs)
                                                 (rd/discover-network) ;; if new devices (or just slow)
-                                                (scan/scan-and-spit)
+                                                (scan/scan-and-send)
                                                 (scan/send-logs)) pool
                                                 :desc "Logging the network")
            ;:restart (ot/at (+ (* 3 (min-ms 1440)) (ot/now)) restart-logging pool)}))))) ;;1440
