@@ -50,7 +50,7 @@
                      check for configuration update and send back any
                      local logs found.
 
-  :restart --------> Restart the local device each 3 days. (This is
+  ;refresh --------> Restart the local device each 3 days. (This is
                      done in order to discard any `visitor devices'
                      that are no longer on the network.)
 
@@ -67,8 +67,11 @@
           {:logger (ot/every time-interval #(do (update-configs)
                                                 (rd/discover-network) ;; if new devices (or just slow)
                                                 (scan/scan-and-spit)
-                                                (scan/send-logs)) pool)
-           :restart (ot/at (+ (* 3 (min-ms 1440)) (ot/now)) restart-logging pool)}))))) ;;1440
+                                                (scan/send-logs)) pool
+                                                :desc "Logging the network")
+           ;:restart (ot/at (+ (* 3 (min-ms 1440)) (ot/now)) restart-logging pool)}))))) ;;1440
+           :refresh (ot/at (+ (* 3 (min-ms 1440)) (ot/now)) init pool 
+                           :desc "Restart the local device and the 'to-be-removed' remote devices list.")})))))
 
 (defn maybe-start-logging
   "If a logger config file is found, start the logging and return
