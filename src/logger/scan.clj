@@ -139,17 +139,6 @@
        (apply merge)
        (hash-map :data)))
 
-(defn scan-and-spit
-  "Scan the network and save the result in a \"BH-<timestamp>\".log
-   file." []
-   (let [start-time (encoding/timestamp)
-         spit-file-fn (partial local/mkdir-spit
-                               (str path "BH" start-time ".log"))]
-     (-> (scan-network)
-         ((comp g/gz64 str))
-         spit-file-fn)
-     (reset! last-scan-duration (- (encoding/timestamp) start-time))))
-
 
 (defn find-unsent-logs []
   (let [filename-list (map #(.getAbsolutePath %)
@@ -157,7 +146,10 @@
                                              path))))]
     (filter #(re-find #"BH.*\.log" %) filename-list)))
 
-(defn send-to-remote-server [data]
+(defn send-to-remote-server 
+  "Send the data to remote servers. Return the result of the http POST
+  request."
+  [data]
   (let [{:keys [logger-password project-id]} (get-configs)]
     (try (client/post (str *base-url* "/logger/post-to-project")
                       {:form-params {:data data
@@ -166,6 +158,36 @@
                                      :project-id project-id}
                        :content-type "application/x-www-form-urlencoded"})
          (catch Exception e))))
+
+
+;; for now we simply spit the file on the hard drive. It might be a
+;; good idea to keep everything in the RAM until we fail to reach the
+;; server. (Mostly for limited read/write type of hard drive.)
+;; (defn scan-and-spit
+;;   "Scan the network and save the result in a \"BH-<timestamp>\".log
+;;    file." []
+;;    (let [start-time (encoding/timestamp)
+;;          spit-file-fn (partial local/mkdir-spit
+;;                                (str path "BH" start-time ".log"))]
+;;      (-> (scan-network)
+;;          ((comp g/gz64 str))
+;;          spit-file-fn)
+;;      (reset! last-scan-duration (- (encoding/timestamp) start-time))))
+
+(defn scan-and-send
+  "Scan the network and send the result to remote servers. If the
+   server can't be reached, or the data is turned down for any
+   reason, save the result in a \"BH-<timestamp>\".log file." []
+   (let [start-time (encoding/timestamp)
+         spit-file-fn (partial local/mkdir-spit
+                               (str path "BH" start-time ".log"))
+         data (-> (scan-network) ((comp g/gz64 str)))]
+     ;; try to send to server
+     (when-not (= 200 (:status (send-to-remote-server data)))
+       ;; if it doesn't work, save data locally.
+       (spit-file-fn data))
+     (reset! last-scan-duration (- (encoding/timestamp) start-time))))
+
 
 (defn project-active?
   "Check with the remote servers if the project is currently in an
