@@ -139,12 +139,13 @@
     :objects \"<DATA>\"}}"
   [device-id]
   (try
-    (let [start-time (timestamp)
-          object-identifiers (bac/remote-objects device-id)
-          properties (get-properties device-id object-identifiers)]
-      {(keyword (str device-id))
-       {:update (str (time/now))
-        :name (get-in properties [:8 (keyword (str device-id)) :Object-name])
-        :objects properties
-        :scan-duration (- (timestamp) start-time)}})
+    (binding [bacure.coerce/*drop-ambiguous* true]
+      (let [start-time (timestamp)
+            object-identifiers (bac/remote-objects device-id)
+            properties (get-properties device-id object-identifiers)]
+        {(keyword (str device-id))
+         {:update (str (time/now))
+          :name (get-in properties [:8 (keyword (str device-id)) :Object-name])
+          :objects properties
+          :scan-duration (- (timestamp) start-time)}}))
     (catch Exception e)))
