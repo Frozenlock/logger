@@ -1,4 +1,4 @@
-(defproject org.clojars.frozenlock/logger "2.0.34-SNAPSHOT"
+(defproject org.clojars.frozenlock/logger "2.0.34"
   :description "Automatic logger for a BACnet network"
   :url "https://bacnethelp.com"
   :license {:name "GNU General Public License V3"
@@ -7,4 +7,4 @@
                  [clj-http "0.6.4"]
                  [org.clojars.frozenlock/gzip64 "1.0.0"]]
   :profiles {:dev {:dependencies [[org.clojure/clojure "1.4.0"]
-                                  [bacure "0.3.19-SNAPSHOT"]]}})
+                                  [bacure "0.3.19"]]}})
